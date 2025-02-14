@@ -1,0 +1,122 @@
+{
+    "message": "Batch processing completed",
+    "results": [
+        {
+            "zohoShipmentId": "212174000034296762",
+            "data": {
+                "data": [
+                    {
+                        "Owner": {
+                            "name": "Hima Bindhu",
+                            "id": "212174000020846001",
+                            "email": "hima.b@lexship.com"
+                        },
+                        "Total_Days": null,
+                        "Sent_for_Customs_Clearance": null,
+                        "$currency_symbol": "Rs.",
+                        "$field_states": null,
+                        "Delivered_Date": null,
+                        "TOTAL_SALE_AMT": null,
+                        "Prospect_Name": {
+                            "name": "Arvind Kumar Tulsiram Bharati",
+                            "id": "212174000008754884"
+                        },
+                        "$sharing_permission": "full_access",
+                        "Seller_ID": "medi.surgical",
+                        "Picked_Date": null,
+                        "Name": "LS477397482CH",
+                        "Last_Activity_Time": null,
+                        "Unsubscribed_Mode": null,
+                        "$process_flow": false,
+                        "Exchange_Rate": 1,
+                        "Cust_ID_s": {
+                            "name": "Ab Surgical", //Account_name
+                            "id": "212174000007817628" //zoho_account id
+                        },
+                        "Currency": "INR",
+                        "Weight_Slab": null,
+                        "$locked_for_me": false,
+                        "id": "212174000034296762", //zoho_shipment_id
+                        "$approval": {
+                            "delegate": false,
+                            "takeover": false,
+                            "approve": false,
+                            "reject": false,
+                            "resubmit": false
+                        },
+                        "Destination_State": null,
+                        "MIS_Status": null,
+                        "Uplifted": null,
+                        "Created_Time": "2025-01-24T10:43:24+05:30",
+                        "Create_Pick_Up_Date": null,
+                        "Booked_Date": null,
+                        "$wizard_connection_path": null,
+                        "$editable": true,
+                        "Customer_ID": "1046",
+                        "Destination_Country": null,
+                        "Country": "AU",
+                        "Held_at_Customs": null,
+                        "Final_Inv_No": null,
+                        "$zia_owner_assignment": "owner_recommendation_unavailable",
+                        "Package_Value": null,
+                        "Cust_ID_11": "1046",
+                        "Proforma_Value": 1762,
+                        "Description": null,
+                        "Billed_Weight": 1,
+                        "$review_process": {
+                            "approve": false,
+                            "reject": false,
+                            "resubmit": false
+                        },
+                        "Proforma_No": "0.00",
+                        "$layout_id": {
+                            "name": "Standard",
+                            "id": "212174000000764039"
+                        },
+                        "Receival_Scan_Date": null,
+                        "Sales_Person_Name": "Payal",
+                        "Bagged_Date": null,
+                        "Record_Image": null,
+                        "$review": null,
+                        "Arrived_at_International_Hub_Date": null,
+                        "IOSS_EORI": null,
+                        "Date_of_Creation": "2025-01-23",
+                        "$zia_visions": null,
+                        "Final_Inv_Date": null,
+                        "MIS_Weight": null,
+                        "Customs_Cleared": null,
+                        "Unsubscribed_Time": null,
+                        "Record_Status__s": "Available",
+                        "$orchestration": false,
+                        "Top_Countries": "AU",
+                        "Customer_Types": "Seller",
+                        "Seller_Name": null,
+                        "Awaiting_Shipper_Action": null,
+                        "Date_of_Cancellation": null,
+                        "$in_merge": false,
+                        "Service_Type": "ShipD",
+                        "Locked__s": false,
+                        "Tag": [],
+                        "Billed_Wt": 0.89,
+                        "Product_Type": "Sale of Goods",
+                        "MAWB": null,
+                        "Value_Currency": null,
+                        "HS_Code": null,
+                        "$approval_state": "approved",
+                        "$pathfinder": false,
+                        "Blue_Dart_Delivered_Date": null
+                    }
+                ]
+            }
+        }
+    ]
+}
+
+// Prospect_Name: {
+                //     name: details.Prospect_Name?.name || "", //automatically mapped by Zoho
+                //     id: details.Prospect_Name?.id || ""
+                // },
+                Cust_ID_s: {
+                    name: details.Cust_ID_s?.name || "", //FROM LEX SHIPMENT API
+                    id: details.Cust_ID_s?.id || ""
+                },

@@ -1,10 +1,10 @@
 require('dotenv').config();
-const axios = require('axios')
+const axios = require('axios');
 
 const {
     ZOHO_SHIPMENTS_API,
     ZOHO_OAUTH_TOKEN
-} = process.env
+} = process.env;
 
 if (!ZOHO_SHIPMENTS_API || !ZOHO_OAUTH_TOKEN) {
     throw new Error('Zoho API configuration is missing. Please check environment variables.');
@@ -12,39 +12,34 @@ if (!ZOHO_SHIPMENTS_API || !ZOHO_OAUTH_TOKEN) {
 
 exports.getShipmentController = async (req, res) => {
     try {
-        const { Zoho_Shipment_id: zohoShipmentId } = req.params;
+        const { shipmentIds } = req.body;
 
-        //Validating request paramenters
-        if (!zohoShipmentId) {
-            return res.status(400).json({ error: 'Zoho shipment id is required' });
+        // Validating request parameters
+        if (!Array.isArray(shipmentIds) || shipmentIds.length === 0) {
+            return res.status(400).json({ error: 'shipmentIds array is required' });
         }
 
-        //Calling the shipment get api serving zoho shipment id to it 
-        const shipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
-            headers: {
-                'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
-                'Content-Type': 'application/json'
+        // Calling the shipment get API for each shipment ID
+        const promises = shipmentIds.map(async (zohoShipmentId) => {
+            try {
+                const shipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
+                    headers: {
+                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                return { zohoShipmentId, data: shipmentResponse.data };
+            } catch (error) {
+                return { zohoShipmentId, error: error.response ? error.response.data : error.message };
             }
         });
-        return res.status(200).json(shipmentResponse.data);
-    } catch (error) {
-        console.error('Error fetching Zoho deal:', error);
 
-        if (error.response) {
-            return res.status(error.response.status).json({
-                error: 'Error fetching Zoho deal',
-                message: error.response.data
-            });
-        } else if (error.request) {
-            return res.status(500).json({
-                error: 'No response received from Zoho API',
-                message: error.message
-            });
-        } else {
-            return res.status(500).json({
-                error: 'Internal server error',
-                message: error.message
-            });
-        }
+        const results = await Promise.all(promises);
+
+        // Send Response
+        res.status(200).json({ message: 'Batch processing completed', results });
+    } catch (error) {
+        console.error('Error fetching shipments:', error.message);
+        res.status(500).json({ error: `Failed to fetch shipment details: ${error.message}` });
     }
-}
+};

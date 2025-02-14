@@ -1,0 +1,106 @@
+{
+    "data": [
+        {
+            "Account": null,
+            "Market_Place": [],
+            "Owner": {
+                "name": "Payal Jain",
+                "id": "212174000010388001",
+                "email": "payal.j@lexship.com"
+            },
+            "Bank_Account_Number": null,
+            "Expectations_of_the_customer_for_Services_Quot": null,
+            "$currency_symbol": "Rs.",
+            "$field_states": null,
+            "Weight_Package": null,
+            "Prospect_Name": {
+                "name": "Vaibhav Raghuwanshi",
+                "id": "212174000016543175"
+            },
+            "$sharing_permission": "full_access",
+            "Seller_ID": "LEX",
+            "Last_Activity_Time": "2025-01-21T17:00:09+05:30",
+            "$process_flow": false,
+            "Billing_Country": "India",
+            "Competitors": null,
+            "$locked_for_me": false,
+            "id": "212174000016617080",
+            "Status": "Active",
+            "$approval": {
+                "delegate": false,
+                "takeover": false,
+                "approve": false,
+                "reject": false,
+                "resubmit": false
+            },
+            "Billing_Street": "Plot No. EC 77, Scheme No. 94, Near Bombay Hospital Square, Ring",
+            "Enrich_Status__s": null,
+            "Created_Time": "2023-10-30T11:18:44+05:30",
+            "Change_Log_Time__s": null,
+            "$wizard_connection_path": null,
+            "$editable": true,
+            "Billing_Code": "452010",
+            "Adcode": null,
+            "Shipping_City": null,
+            "Shipping_Country": null,
+            "No_of_shipments": null,
+            "Customer_Type": "LEX",
+            "Shipping_Code": null,
+            "Billing_City": "Indore",
+            "IFSC_Code": null,
+            "Customer_ID": "6575",
+            "Identity_Proof": null,
+            "Created_By": {
+                "name": "Padmanabhan Babu",
+                "id": "212174000000195001",
+                "email": "padmanabhan.babu@lexship.com"
+            },
+            "$zia_owner_assignment": "owner_recommendation_unavailable",
+            "$is_duplicate": false,
+            "GST_Number": null,
+            "Shipping_Street": null,
+            "Description": null,
+            "Category": null,
+            "Shipping_State": null,
+            "$review_process": {
+                "approve": false,
+                "reject": false,
+                "resubmit": false
+            },
+            "$layout_id": {
+                "name": "Standard",
+                "id": "212174000000000169"
+            },
+            "Sales_Person_Name": [
+                "Divya"
+            ],
+            "Product_verticals1": [],
+            "$review": null,
+            "IEC_Code": null,
+            "Account_Name": "VLADO SKY ENTERPRISE PRIVATE LIMITED",
+            "Prospect_Stage": "Closed Won",
+            "$zia_visions": null,
+            "Major_Destinations1": null,
+            "Type_of_Business": "Sole Proprietorship",
+            "Territories": null,
+            "Mobile": "7223935633",
+            "Record_Status__s": "Available",
+            "$orchestration": false,
+            "Contact_Name": {
+                "name": "Vaibhav Raghuwanshi",
+                "id": "212174000016470353"
+            },
+            "LUT_Expiration_Date": null,
+            "Cust_Id": "6575",
+            "Account_Type1": null,
+            "$in_merge": false,
+            "Locked__s": false,
+            "Billing_State": "Madhya Pradesh",
+            "Address_Proof": null,
+            "Tag": [],
+            "$approval_state": "approved",
+            "$pathfinder": false,
+            "Last_Enriched_Time__s": null
+        }
+    ]
+}

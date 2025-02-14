@@ -39,20 +39,33 @@ exports.createLeadController = async (req, res) => {
       return res.status(404).json({ error: 'Customer details not found' });
     }
 
+    // Get registered address from the second array
+    const billingAddress = customerDetailsResponse.data[1]?.find(addr => addr.label === "Billing Address");
+
     const payload = {
       data: [
         {
-          Cust_ID: customerDetails.id,
+          Cust_ID: customerDetails.id.toString(),
           First_Name: customerDetails.name,
           Company: customerDetails.company_name,
           Last_Name: customerDetails.last_name,
           Email: customerDetails.email,
           Phone: customerDetails.mobile,
-          Type_of_business: customerDetails.type_of_business
+          Mobile: customerDetails.mobile,
+          Type_of_business: customerDetails.type_of_business,
+          Secondary_Email: customerDetails.email,
+          // Add registered address fields
+          Street: billingAddress?.street || null,
+          City: billingAddress?.city || null,
+          State: billingAddress?.state || null,
+          Zip_Code: billingAddress?.postal_code || null,
+          Country: billingAddress?.country_code || null
         }
       ]
     };
-    console.log(`Payload sent to Zoho Lead API  ${JSON.stringify(payload, null, 2)}`)
+
+    console.log(`Payload sent to Zoho Lead API  ${JSON.stringify(payload, null, 2)}`);
+
     const zohoResponse = await axios.post(ZOHO_LEAD_API, payload, {
       headers: {
         'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
