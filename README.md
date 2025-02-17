@@ -1,1 +1,4 @@
-# lex-zoho API
+# LexZohoSync
+
+lexship-zoho API
+
