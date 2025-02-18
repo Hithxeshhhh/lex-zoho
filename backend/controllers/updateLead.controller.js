@@ -1,23 +1,17 @@
 require('dotenv').config();
 const axios = require('axios');
+const zohoAuth = require('../config/zohoAuth');
 
-const { ZOHO_LEAD_API, ZOHO_OAUTH_TOKEN } = process.env;
+const { ZOHO_LEAD_API } = process.env;
 
-if (!ZOHO_LEAD_API || !ZOHO_OAUTH_TOKEN) {
-    throw new Error('Zoho API configuration is missing. Please check environment variables.');
+if (!ZOHO_LEAD_API) {
+    throw new Error('Zoho Lead API configuration is missing. Please check environment variables.');
 }
 
-exports.updateLeadController = async (req, res) => {
+const processLead = async (zohoId, toBeUpdatedData) => {
     try {
-        const { Zoho_id: zohoId } = req.params;
-        if (!zohoId) {
-            return res.status(400).json({ error: 'Zoho id is required' });
-        }
-
-        const toBeUpdatedData = req.body;
-        if (Object.keys(toBeUpdatedData).length === 0) {
-            return res.status(400).json({ error: 'No data provided to update' });
-        }
+        // Get fresh access token
+        const accessToken = await zohoAuth.getAccessToken();
 
         const payload = {
             data: [
@@ -33,30 +27,63 @@ exports.updateLeadController = async (req, res) => {
 
         const leadResponse = await axios.put(`${ZOHO_LEAD_API}/${zohoId}`, payload, {
             headers: {
-                'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
                 'Content-Type': 'application/json',
             }
         });
 
-        return res.status(leadResponse.status).json(leadResponse.data);
+        return { zohoId, status: 'success', data: leadResponse.data };
     } catch (error) {
-        console.error('Error updating Zoho lead:', error);
+        console.error(`Error updating Zoho lead ${zohoId}:`, error);
 
         if (error.response) {
-            return res.status(error.response.status).json({
+            return {
+                zohoId,
+                status: 'error',
                 error: 'Error updating Zoho lead',
                 message: error.response.data
-            });
+            };
         } else if (error.request) {
-            return res.status(500).json({
+            return {
+                zohoId,
+                status: 'error',
                 error: 'No response received from Zoho API',
                 message: error.message
-            });
+            };
         } else {
-            return res.status(500).json({
+            return {
+                zohoId,
+                status: 'error',
                 error: 'Internal server error',
                 message: error.message
-            });
+            };
         }
+    }
+};
+
+exports.updateLeadController = async (req, res) => {
+    try {
+        const { Zoho_ids: zohoIds } = req.body; // Expecting an array of Zoho Lead IDs
+        const toBeUpdatedData = req.body.data; // Data to be updated
+
+        if (!Array.isArray(zohoIds) || zohoIds.length === 0) {
+            return res.status(400).json({ error: 'Zoho_ids must be a non-empty array' });
+        }
+
+        if (Object.keys(toBeUpdatedData).length === 0) {
+            return res.status(400).json({ error: 'No data provided to update' });
+        }
+
+        const results = [];
+
+        for (const zohoId of zohoIds) {
+            const result = await processLead(zohoId, toBeUpdatedData);
+            results.push(result);
+        }
+
+        res.status(200).json({ results });
+    } catch (error) {
+        console.error('Error processing multiple leads:', error);
+        res.status(500).json({ error: 'Failed to process multiple leads', details: error.message });
     }
 };

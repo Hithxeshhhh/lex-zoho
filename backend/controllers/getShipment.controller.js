@@ -1,12 +1,12 @@
 require('dotenv').config();
 const axios = require('axios');
+const zohoAuth = require('../config/zohoAuth');
 
 const {
-    ZOHO_SHIPMENTS_API,
-    ZOHO_OAUTH_TOKEN
+    ZOHO_SHIPMENTS_API
 } = process.env;
 
-if (!ZOHO_SHIPMENTS_API || !ZOHO_OAUTH_TOKEN) {
+if (!ZOHO_SHIPMENTS_API) {
     throw new Error('Zoho API configuration is missing. Please check environment variables.');
 }
 
@@ -19,12 +19,15 @@ exports.getShipmentController = async (req, res) => {
             return res.status(400).json({ error: 'shipmentIds array is required' });
         }
 
+        // Get fresh access token
+        const accessToken = await zohoAuth.getAccessToken();
+
         // Calling the shipment get API for each shipment ID
         const promises = shipmentIds.map(async (zohoShipmentId) => {
             try {
                 const shipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });

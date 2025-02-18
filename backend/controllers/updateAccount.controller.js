@@ -1,9 +1,9 @@
 require('dotenv').config();
 const axios = require('axios');
+const zohoAuth = require('../config/zohoAuth');
 
 const {
     ZOHO_ACCOUNTS_API,
-    ZOHO_OAUTH_TOKEN,
     LEX_CUSTOMER_DETAIL_API,
     LEX_UPDATE_ZOHO_API,
     BEARER_TOKEN
@@ -113,10 +113,13 @@ const processBatch = async (accountIdsBatch) => {
 
                 console.log(`Processing account ID: ${zohoAccountId}`);
                 
+                // Get a fresh access token
+                const accessToken = await zohoAuth.getAccessToken();
+                
                 // Get account details to fetch Customer_ID
                 const accountResponse = await axios.get(`${ZOHO_ACCOUNTS_API}/${zohoAccountId}`, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -125,13 +128,14 @@ const processBatch = async (accountIdsBatch) => {
                 const customerDetails = await getCustomerDetails(customerId);
                 const payload = constructPayload(customerId, customerDetails);
 
-                // Update account
+                // Update account - get a fresh token in case the operation took time
+                const updateAccessToken = await zohoAuth.getAccessToken();
                 const updateResponse = await axios.put(
                     `${ZOHO_ACCOUNTS_API}/${zohoAccountId}`,
                     payload,
                     {
                         headers: {
-                            'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                            'Authorization': `Zoho-oauthtoken ${updateAccessToken}`,
                             'Content-Type': 'application/json'
                         }
                     }

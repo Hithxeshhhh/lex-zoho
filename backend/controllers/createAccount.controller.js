@@ -1,12 +1,10 @@
 require('dotenv').config();
 const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
+const zohoAuth = require('../config/zohoAuth');
 const {
     LEX_CUSTOMER_DETAIL_API,
     BEARER_TOKEN,
     ZOHO_DEAL_API,
-    ZOHO_OAUTH_TOKEN,
     ZOHO_ACCOUNTS_API
 } = process.env;
 
@@ -29,8 +27,9 @@ const getCustomerDetails = async (customerId) => {
 const getZohoDealDetails = async (zohoDealId) => {
     try {
         const url = `${ZOHO_DEAL_API}/${zohoDealId}`;
+        const accessToken = await zohoAuth.getAccessToken();
         const headers = {
-            'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+            'Authorization': `Zoho-oauthtoken ${accessToken}`,
             'Content-Type': 'application/json',
         };
         const response = await axios.get(url, { headers });
@@ -43,8 +42,9 @@ const getZohoDealDetails = async (zohoDealId) => {
 // Creating a Zoho account using Zoho accounts API
 const createZohoAccount = async (payload) => {
     try {
+        const accessToken = await zohoAuth.getAccessToken();
         const headers = {
-            'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+            'Authorization': `Zoho-oauthtoken ${accessToken}`,
             'Content-Type': 'application/json',
         };
         const response = await axios.post(ZOHO_ACCOUNTS_API, payload, { headers });
@@ -127,18 +127,13 @@ const constructPayload = (customerId, zohoDealId, reqBodyData, customerDetails, 
     };
 };
 
-// Create Account Controller
-exports.createAccountController = async (req, res) => {
+// Process each customer ID
+const processCustomer = async (customerId, reqBodyData) => {
     try {
-        const { Customer_id: customerId } = req.params;
-        const reqBodyData = req.body;
-        if (!customerId) {
-            return res.status(400).json({ error: 'Customer_id is required' });
-        }
         const customerDetails = await getCustomerDetails(customerId);
         const zohoDealId = customerDetails[0]?.Zoho_Deal_ID;
         if (!zohoDealId) {
-            return res.status(400).json({ error: 'Zoho_Deal_ID is missing in customer details' });
+            return { customerId, status: 'error', message: 'Zoho_Deal_ID is missing in customer details' };
         }
         const dealDetails = await getZohoDealDetails(zohoDealId);
         const payload = constructPayload(customerId, zohoDealId, reqBodyData, customerDetails, dealDetails);
@@ -149,22 +144,36 @@ exports.createAccountController = async (req, res) => {
         // Check if the response is successful and contains the id
         if (zohoCreateAccountResponse.data && zohoCreateAccountResponse.data[0].status === 'success') {
             const id = zohoCreateAccountResponse.data[0].details.id;
-            const folderPath = path.join(__dirname, 'zoho_responses');
-            const filePath = path.join(folderPath, 'response_id.txt');
-
-            // Create folder if it doesn't exist
-            if (!fs.existsSync(folderPath)) {
-                fs.mkdirSync(folderPath);
-            }
-
-            // Write the id to the text file
-            fs.writeFileSync(filePath, `id: ${id}`, 'utf8');
-            console.log(`ID ${id} has been written to ${filePath}`);
+            console.log(`ID ${id} has been created successfully`);
         }
 
-        res.status(200).send(zohoCreateAccountResponse);
+        return { customerId, status: 'success', data: zohoCreateAccountResponse };
     } catch (error) {
         console.error("Error creating account:", JSON.stringify(error.response?.data || error.message, null, 2));
+        return { customerId, status: 'error', message: error.message };
+    }
+};
+
+// Create Account Controller
+exports.createAccountController = async (req, res) => {
+    try {
+        const { customerIds } = req.body; // Expecting an array of customer IDs
+        const reqBodyData = req.body;
+
+        if (!Array.isArray(customerIds) || customerIds.length === 0) {
+            return res.status(400).json({ error: 'customerIds must be a non-empty array' });
+        }
+
+        const results = [];
+
+        for (const customerId of customerIds) {
+            const result = await processCustomer(customerId, reqBodyData);
+            results.push(result);
+        }
+
+        res.status(200).json({ results });
+    } catch (error) {
+        console.error("Error processing multiple accounts:", JSON.stringify(error.response?.data || error.message, null, 2));
         res.status(500).send(error.response?.data || { message: error.message });
     }
 };

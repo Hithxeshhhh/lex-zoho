@@ -1,9 +1,10 @@
 require('dotenv').config();
 const axios = require('axios');
+const zohoAuth = require('../config/zohoAuth');
 
-const { ZOHO_ACCOUNTS_API, ZOHO_OAUTH_TOKEN } = process.env
+const { ZOHO_ACCOUNTS_API } = process.env;
 
-if (!ZOHO_ACCOUNTS_API || !ZOHO_OAUTH_TOKEN) {
+if (!ZOHO_ACCOUNTS_API) {
     throw new Error('Zoho API configuration is missing. Please check environment variables.')
 }
 
@@ -16,12 +17,15 @@ exports.getAccountController = async (req, res) => {
             return res.status(400).json({ error: 'accountIds array is required' });
         }
 
+        // Get fresh access token
+        const accessToken = await zohoAuth.getAccessToken();
+
         // Process all account requests in parallel
         const results = await Promise.all(accountIds.map(async (accountId) => {
             try {
-                const accountResponse = await axios.get(`${process.env.ZOHO_ACCOUNTS_API}/${accountId}`, {
+                const accountResponse = await axios.get(`${ZOHO_ACCOUNTS_API}/${accountId}`, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${process.env.ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });

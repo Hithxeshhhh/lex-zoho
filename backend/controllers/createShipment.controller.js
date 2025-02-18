@@ -14,6 +14,8 @@ const {
     ZOHO_ACCOUNTS_API
 } = process.env;
 
+const zohoAuth = require('../config/zohoAuth');
+
 if (!ZOHO_SHIPMENTS_API || !ZOHO_OAUTH_TOKEN || !LEX_SHIPMENT_API || 
     !SHIPMENT_BEARER_TOKEN || !LEX_CUSTOMER_DETAIL_API || !BEARER_TOKEN || !ZOHO_DEAL_API || !ZOHO_ACCOUNTS_API) {
     throw new Error('API configuration is missing. Please check environment variables.');
@@ -72,7 +74,7 @@ const getZohoDealDetails = async (customerId) => {
 
         const dealResponse = await axios.get(`${ZOHO_DEAL_API}/${zoho_deal_id}`, {
             headers: {
-                'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                'Authorization': `Zoho-oauthtoken ${await zohoAuth.getAccessToken()}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -102,7 +104,7 @@ const getZohoAccountDetails = async (customerId) => {
         // Get account using Zoho_Cust_ID from customer details
         const accountResponse = await axios.get(`${ZOHO_ACCOUNTS_API}/${zoho_cust_id}`, {
             headers: {
-                'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                'Authorization': `Zoho-oauthtoken ${await zohoAuth.getAccessToken()}`,
                 'Content-Type': 'application/json'
             }
         });
@@ -249,7 +251,7 @@ const processBatch = async (awbBatch) => {
     // Create shipment
     const response = await axios.post(`${ZOHO_SHIPMENTS_API}`, payload, {
         headers: {
-            'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+            'Authorization': `Zoho-oauthtoken ${await zohoAuth.getAccessToken()}`,
             'Content-Type': 'application/json',
         }
     });

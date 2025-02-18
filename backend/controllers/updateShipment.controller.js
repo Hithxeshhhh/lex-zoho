@@ -1,8 +1,8 @@
 require('dotenv').config();
 const axios = require('axios')
+const zohoAuth = require('../config/zohoAuth');
 
 const {
-    ZOHO_OAUTH_TOKEN,
     ZOHO_SHIPMENTS_API,
     LEX_SHIPMENT_API,
     SHIPMENT_BEARER_TOKEN,
@@ -10,7 +10,7 @@ const {
     ZOHO_DEAL_API,
     LEX_CUSTOMER_DETAIL_API,
     BEARER_TOKEN,
-} = process.env
+} = process.env;
 
 
 
@@ -18,25 +18,23 @@ const getShipmentController = async (req, res) => {
     try {
         const { shipmentIds } = req.body;
 
-        // Validating request parameters
         if (!Array.isArray(shipmentIds) || shipmentIds.length === 0) {
             return res.status(400).json({ error: 'shipmentIds array is required' });
         }
 
-        // Calling the shipment get API for each shipment ID
+        const accessToken = await zohoAuth.getAccessToken();
+
         const promises = shipmentIds.map(async (zohoShipmentId) => {
             try {
                 const shipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });
 
                 const shipmentData = shipmentResponse.data;
-                const awb = shipmentData.data[0].Name; // Extracting the Name value
-
-                // Call getShipmentDetails with the extracted awb
+                const awb = shipmentData.data[0].Name;
                 const shipmentDetails = await getShipmentDetails(awb);
 
                 return { zohoShipmentId, data: shipmentData, shipmentDetails };
@@ -46,11 +44,7 @@ const getShipmentController = async (req, res) => {
         });
 
         const results = await Promise.all(promises);
-
-        // Print the results
         console.log('Shipment API responses:', results);
-
-        // Send Response
         res.status(200).json({ message: 'Batch processing completed', results });
     } catch (error) {
         console.error('Error fetching shipments:', error.message);
@@ -114,9 +108,10 @@ const processBatch = async (shipmentIdsBatch) => {
                 await delay(100);
 
                 console.log(`Processing shipment ID: ${zohoShipmentId}`);
+                const accessToken = await zohoAuth.getAccessToken();
                 const existingShipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -220,7 +215,7 @@ const processBatch = async (shipmentIdsBatch) => {
                 // Update shipment
                 const updateResponse = await axios.put(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, payload, {
                     headers: {
-                        'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
                         'Content-Type': 'application/json'
                     }
                 });
@@ -286,9 +281,10 @@ const getZohoDealDetails = async (customerId) => {
             return null;
         }
 
+        const accessToken = await zohoAuth.getAccessToken();
         const dealResponse = await axios.get(`${ZOHO_DEAL_API}/${zoho_deal_id}`, {
             headers: {
-                'Authorization': `Zoho-oauthtoken ${ZOHO_OAUTH_TOKEN}`,
+                'Authorization': `Zoho-oauthtoken ${accessToken}`,
                 'Content-Type': 'application/json'
             }
         });

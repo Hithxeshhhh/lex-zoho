@@ -1,5 +1,7 @@
-const express = require('express')
+const express = require('express');
 const multer = require('multer');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const { createLeadController } = require('../controllers/createLead.controller');
 const { createDealController } = require('../controllers/createDeal.controller');
@@ -14,23 +16,27 @@ const { createShipmentController } = require('../controllers/createShipment.cont
 const { getShipmentController } = require('../controllers/getShipment.controller');
 const { updateShipmentController } = require('../controllers/updateShipment.controller');
 const { updateDetailstoZohoController } = require('../controllers/updateDetailstoZoho.controller');
-const router= express.Router()
 
-const upload = multer({ dest: 'uploads/' }); // Store uploaded files in 'uploads/' directory
+// Import the middleware
+const basicAuthMiddleware = require('../middleware/authMiddleware');
 
+const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
+
+// Use the middleware for the routes that need Basic Auth
+router.use(basicAuthMiddleware);
 
 router.get('/test', (req, res) => {
     res.json({ message: 'Testing page' });
 });
 
-
-router.post('/create-lead/:Customer_id', createLeadController);
-router.put('/update-lead/:Zoho_id', updateLeadController);
-router.get('/get-lead/:Zoho_id', getLeadController);
-router.post('/create-deal/:Customer_id/', createDealController);
-router.put('/update-deal/:dealId', updateDealController);
-router.get('/get-deal/:Zoho_Deal_Id', getDealController);
-router.post('/create-account/:Customer_id', createAccountController);
+router.post('/create-lead', createLeadController);
+router.put('/update-lead', updateLeadController);
+router.get('/get-lead', getLeadController);
+router.post('/create-deal', createDealController);
+router.put('/update-deal', updateDealController);
+router.get('/get-deal', getDealController);
+router.post('/create-account', createAccountController);
 router.get('/get-account', getAccountController);
 router.put('/update-account', updateAccountController);
 router.post('/create-shipment', createShipmentController);
