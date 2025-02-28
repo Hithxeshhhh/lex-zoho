@@ -1,5 +1,5 @@
 require('dotenv').config();
-const axios = require('axios')
+const axios = require('axios');
 const zohoAuth = require('../config/zohoAuth');
 
 const {
@@ -10,12 +10,80 @@ const {
     ZOHO_DEAL_API,
     LEX_CUSTOMER_DETAIL_API,
     BEARER_TOKEN,
+    ZOHO_ACCOUNTS_API
 } = process.env;
 
+// Add a delay function
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+// Add at the top with other variables
+let failedUpdates = [];
+
+// Add queue function
+const queueFailedUpdate = (shipmentId, payload) => {
+    failedUpdates.push({ shipmentId, payload });
+    console.log(`Added to failed updates queue: Shipment ID ${shipmentId}`);
+    console.log(`Failed updates queue size: ${failedUpdates.length}`);
+};
+
+// Add retry function
+const processFailedUpdates = async (maxRetries = 3) => {
+    console.log(`Processing ${failedUpdates.length} failed updates...`);
+    
+    if (failedUpdates.length === 0) {
+        return { success: true, message: 'No failed updates to process' };
+    }
+
+    const currentBatch = [...failedUpdates];
+    failedUpdates = []; // Clear the queue
+
+    const results = {
+        success: [],
+        failed: []
+    };
+
+    for (const item of currentBatch) {
+        console.log(`Retrying update for Shipment ID: ${item.shipmentId}`);
+        let retryCount = maxRetries;
+        
+        while (retryCount > 0) {
+            try {
+                const accessToken = await zohoAuth.getAccessToken();
+                const response = await axios.put(
+                    `${ZOHO_SHIPMENTS_API}/${item.shipmentId}`, 
+                    item.payload,
+                    {
+                        headers: {
+                            'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
+                results.success.push({ shipmentId: item.shipmentId, data: response.data });
+                break; // Success, exit retry loop
+            } catch (error) {
+                retryCount--;
+                if (retryCount === 0) {
+                    results.failed.push({ shipmentId: item.shipmentId, error: error.message });
+                    queueFailedUpdate(item.shipmentId, item.payload); // Re-queue if all retries failed
+                } else {
+                    await delay(2000); // Wait before next retry
+                }
+            }
+        }
+    }
+
+    return {
+        success: true,
+        message: `Processed ${currentBatch.length} failed updates. Succeeded: ${results.success.length}, Failed: ${results.failed.length}`,
+        details: results
+    };
+};
 
 const getShipmentController = async (req, res) => {
     try {
+        await delay(500); // Add delay of 0.5 seconds
+
         const { shipmentIds } = req.body;
 
         if (!Array.isArray(shipmentIds) || shipmentIds.length === 0) {
@@ -26,6 +94,8 @@ const getShipmentController = async (req, res) => {
 
         const promises = shipmentIds.map(async (zohoShipmentId) => {
             try {
+                await delay(500); // Add delay of 0.5 seconds
+
                 const shipmentResponse = await axios.get(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, {
                     headers: {
                         'Authorization': `Zoho-oauthtoken ${accessToken}`,
@@ -44,7 +114,6 @@ const getShipmentController = async (req, res) => {
         });
 
         const results = await Promise.all(promises);
-        console.log('Shipment API responses:', results);
         res.status(200).json({ message: 'Batch processing completed', results });
     } catch (error) {
         console.error('Error fetching shipments:', error.message);
@@ -52,9 +121,10 @@ const getShipmentController = async (req, res) => {
     }
 };
 
-
 const getShipmentDetails = async (awb) => {
     try {
+        await delay(500); // Add delay of 0.5 seconds
+
         const url = `${LEX_SHIPMENT_API}AWB=${awb}`;
         const response = await axios.get(url, {
             headers: {
@@ -69,16 +139,64 @@ const getShipmentDetails = async (awb) => {
     }
 };
 
-const updateShipmentDetails = async (awb, zohoShipmentId) => {
+const getZohoAccountDetails = async (customerId) => {
     try {
-        const url = `${LEX_UPDATE_SHIPEMENT_API}AWB=${awb}&Zoho_Shipment_Id=${zohoShipmentId}`;
+        await delay(500); // Add delay of 0.5 seconds
+
+        // Get customer details to get Zoho_Cust_ID
+        const customerDetails = await getCustomerDetails(customerId);
+        const zoho_cust_id = customerDetails[0].Zoho_Cust_ID;
+        console.log('Zoho Customer ID:', zoho_cust_id);
+        if (!zoho_cust_id) {
+            console.log(`No Zoho Customer ID found for customer: ${customerId}`);
+            return null;
+        }
+
+        // Get account using Zoho_Cust_ID from customer details
+        const accountResponse = await axios.get(`${ZOHO_ACCOUNTS_API}/${zoho_cust_id}`, {
+            headers: {
+                'Authorization': `Zoho-oauthtoken ${await zohoAuth.getAccessToken()}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (accountResponse.data?.data && accountResponse.data.data.length > 0) {
+            return accountResponse.data.data[0];
+        }
+        
+        console.log(`No account found for ID: ${zoho_cust_id}`);
+        return null;
+    } catch (error) {
+        console.error(`Failed to fetch account details: ${error.message}`);
+        return null;
+    }
+};
+
+const updateShipmentDetails = async (awbNumber, zohoShipmentId, retry = true) => {
+    try {
+        await delay(1000); // Delay before making the request
+
+        const url = `${LEX_UPDATE_SHIPEMENT_API}AWB=${awbNumber}&Zoho_Shipment_Id=${zohoShipmentId}`;
         const headers = {
             'Authorization': `Bearer ${SHIPMENT_BEARER_TOKEN}`,
             'Content-Type': 'application/json',
         };
-       const response =  await axios.post(url,{}, { headers });
-       console.log(`Response for AWB ${awb}:`, response.data); // Print the response data
+        const response = await axios.get(url, { headers });
+        return response.data;
     } catch (error) {
+        console.error(`Failed to update shipment details for AWB: ${awbNumber}, Error: ${error.message}`);
+        if (error.response) {
+            console.error('Response data:', error.response.data);
+            console.error('Response status:', error.response.status);
+            console.error('Response headers:', error.response.headers);
+        }
+
+        if (retry) {
+            console.log(`Retrying to update shipment details for AWB: ${awbNumber}`);
+            await delay(2000); // Delay before retrying
+            return updateShipmentDetails(awbNumber, zohoShipmentId, false); // Retry once
+        }
+
         throw new Error(`Failed to update shipment details for AWB: ${awbNumber}, Error: ${error.message}`);
     }
 };
@@ -97,15 +215,13 @@ const convertDateFormat = (dateString) => {
     }
 };
 
-// Add a delay function
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
+// Modify the processBatch function to use retry mechanism
 const processBatch = async (shipmentIdsBatch) => {
     try {
         const results = [];
         for (const zohoShipmentId of shipmentIdsBatch) {
             try {
-                await delay(100);
+                await delay(500); 
 
                 console.log(`Processing shipment ID: ${zohoShipmentId}`);
                 const accessToken = await zohoAuth.getAccessToken();
@@ -125,8 +241,9 @@ const processBatch = async (shipmentIdsBatch) => {
 
                 // Get deal details using customer ID
                 const dealDetails = await getZohoDealDetails(additionalShipmentDetails.Customer_ID);
-                console.log('Deal Details:', JSON.stringify(dealDetails, null, 2));
-                console.log('Additional Shipment Details:', JSON.stringify(additionalShipmentDetails, null, 2));
+                
+
+                const accountDetails = await getZohoAccountDetails(additionalShipmentDetails.Customer_ID);
 
                 // Create deal object
                 const dealObject = dealDetails ? {
@@ -134,8 +251,12 @@ const processBatch = async (shipmentIdsBatch) => {
                     id: dealDetails.id || ""
                 } : null;
 
+                const truncatedDescription = additionalShipmentDetails.Description && additionalShipmentDetails.Description.length > 255
+                    ? additionalShipmentDetails.Description.substring(0, 255)
+                    : additionalShipmentDetails.Description;
+
                 const updatedFields = {
-                    
+
                     Name: additionalShipmentDetails.Name || "",
                     Currency: additionalShipmentDetails.Currency || "",
                     Weight_Slab: additionalShipmentDetails.Weight_Slab || "",
@@ -149,7 +270,7 @@ const processBatch = async (shipmentIdsBatch) => {
                     Package_Value: additionalShipmentDetails.Package_Value && !isNaN(additionalShipmentDetails.Package_Value) ? Math.round(parseFloat(additionalShipmentDetails.Package_Value)) : null,
                     Cust_ID_11: additionalShipmentDetails.Cust_ID_11 ? additionalShipmentDetails.Cust_ID_11.toString() : "",
                     Proforma_Value: additionalShipmentDetails.Proforma_Value && !isNaN(additionalShipmentDetails.Proforma_Value) ? Math.round(parseFloat(additionalShipmentDetails.Proforma_Value)) : null,
-                    Description: additionalShipmentDetails.Description || "",
+                    Description: truncatedDescription || "",
                     Billed_Weight: additionalShipmentDetails.Billed_Weight ? parseFloat(additionalShipmentDetails.Billed_Weight).toFixed(2) : "",
                     Proforma_No: additionalShipmentDetails.Proforma_No || "",
                     IOSS_EORI: additionalShipmentDetails.IOSS_EORI || "",
@@ -179,7 +300,9 @@ const processBatch = async (shipmentIdsBatch) => {
                     Bagged_Date: additionalShipmentDetails.Bagged_Date ? new Date(additionalShipmentDetails.Bagged_Date).toISOString().split('T')[0] : "",
                     Sent_for_Customs_Clearance: additionalShipmentDetails.Sent_for_Customs_Clearance ? new Date(additionalShipmentDetails.Sent_for_Customs_Clearance).toISOString().split('T')[0] : "",
                     Customs_Cleared: additionalShipmentDetails.Customs_Cleared ? new Date(additionalShipmentDetails.Customs_Cleared).toISOString().split('T')[0] : "",
-                    Uplifted: additionalShipmentDetails.Uplifted ? new Date(additionalShipmentDetails.Uplifted).toISOString().split('T')[0] : "",
+                    Uplifted: additionalShipmentDetails.Uplifted 
+                    ? new Date(additionalShipmentDetails.Uplifted).toLocaleDateString('en-CA') // Ensures YYYY-MM-DD
+                    : "",
                     Arrived_at_International_Hub_Date:additionalShipmentDetails.Arrived_at_International_Hub_Date 
                     ? new Date(additionalShipmentDetails.Arrived_at_International_Hub_Date).toLocaleDateString('en-CA') // Ensures YYYY-MM-DD
                     : "",
@@ -199,30 +322,57 @@ const processBatch = async (shipmentIdsBatch) => {
                     ? additionalShipmentDetails.Forward_flag
                     : "",
                     Billed_Weight_Slab: additionalShipmentDetails.Billed_Weight_Slab || "",
-                    Reached_Destnation_Country: additionalShipmentDetails.Reached_destination_country_date
-                    ? additionalShipmentDetails.Reached_destination_country_date.split(' ')[0]
+                    Reached_Destnation_Country: additionalShipmentDetails.Reached_destination_country
+                    ? additionalShipmentDetails.Reached_destination_country.split(' ')[0]
                     : "",
                     Create_Pick_Up_Time: additionalShipmentDetails.Create_Pick_Up_Time || "",
                     Seller_Name2:additionalShipmentDetails.Seller_Name || "",
+
+                    In_transport_to_destination_country: additionalShipmentDetails.In_tranport_destination_country 
+                    ? new Date(additionalShipmentDetails.In_tranport_destination_country).toLocaleDateString('en-CA')
+                    : "",
+                    TOTAL_SALE_AMT:additionalShipmentDetails.Invoice_Amount || "",
                     // Prospect_Name: dealObject,
+                    // Cust_ID_s: accountDetails ? {
+                    //     name: accountDetails.Account_Name || "",
+                    //     id: accountDetails.id || ""
+                    // } : null,
                 };
 
                 // Construct Payload
                 const payload = {
                     data: [{ ...updatedFields }]
                 };
-                   console.log('Payload:', JSON.stringify(payload, null, 2));
-                // Update shipment
-                const updateResponse = await axios.put(`${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, payload, {
-                    headers: {
-                        'Authorization': `Zoho-oauthtoken ${accessToken}`,
-                        'Content-Type': 'application/json'
+                console.log('Payload:', JSON.stringify(payload, null, 2));
+
+                // Update shipment with retry
+                let retryCount = 3;
+                while (retryCount > 0) {
+                    try {
+                        const updateResponse = await axios.put(
+                            `${ZOHO_SHIPMENTS_API}/${zohoShipmentId}`, 
+                            payload,
+                            {
+                                headers: {
+                                    'Authorization': `Zoho-oauthtoken ${accessToken}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            }
+                        );
+                        results.push({ zohoShipmentId, status: 'success', data: updateResponse.data });
+                        break; // Success, exit retry loop
+                    } catch (error) {
+                        retryCount--;
+                        if (retryCount === 0) {
+                            queueFailedUpdate(zohoShipmentId, payload);
+                            results.push({ zohoShipmentId, status: 'error', error: error.message });
+                        } else {
+                            await delay(2000); // Wait before next retry
+                        }
                     }
-                });
-                
-                results.push({ zohoShipmentId, status: 'success', data: updateResponse.data });
+                }
             } catch (error) {
-                console.error(`Error updating shipment ${zohoShipmentId}:`, error.response ? JSON.stringify(error.response.data, null, 2) : error.message);
+                console.error(`Error updating shipment ${zohoShipmentId}:`, error.message);
                 results.push({ zohoShipmentId, status: 'error', error: error.message });
             }
         }
@@ -232,27 +382,29 @@ const processBatch = async (shipmentIdsBatch) => {
     }
 };
 
+
 exports.updateShipmentController = async (req, res) => {
     try {
         const { shipmentIds } = req.body;
-
-        // Validating request parameters
         if (!Array.isArray(shipmentIds) || shipmentIds.length === 0) {
             return res.status(400).json({ error: 'shipmentIds array is required' });
         }
 
-        const BATCH_SIZE = 90;
+        const BATCH_SIZE = 80;
         const results = [];
         
-        // Process shipmentIds in batches of 90
         for (let i = 0; i < shipmentIds.length; i += BATCH_SIZE) {
             const batch = shipmentIds.slice(i, i + BATCH_SIZE);
             console.log(`Processing batch ${Math.floor(i/BATCH_SIZE) + 1} with ${batch.length} shipments`);
             const batchResult = await processBatch(batch);
             results.push(...batchResult);
+            await delay(2000);
         }
 
-        // Group results by status
+        // Process failed updates
+        const failedProcessingResult = await processFailedUpdates();
+
+        // Group results
         const successfulUpdates = results.filter(r => r.status === 'success');
         const failedUpdates = results.filter(r => r.status === 'error');
 
@@ -261,19 +413,34 @@ exports.updateShipmentController = async (req, res) => {
             summary: {
                 total: results.length,
                 successful: successfulUpdates.length,
-                failed: failedUpdates.length
+                failed: failedUpdates.length,
+                failed_updates_queue: failedUpdates.length
             },
-            results 
+            results,
+            failedUpdates: {
+                processed: failedProcessingResult,
+                remaining: failedUpdates.length,
+                items: failedUpdates
+            }
         });
     } catch (error) {
         console.error('Error updating shipments:', error.message);
-        res.status(500).json({ error: `Failed to update shipments: ${error.message}` });
+        res.status(500).json({ 
+            error: 'Failed to update shipments',
+            message: error.message,
+            failedUpdates: {
+                count: failedUpdates.length,
+                items: failedUpdates
+            }
+        });
     }
 };
 
 // Add the getZohoDealDetails function if it's not already present
 const getZohoDealDetails = async (customerId) => {
     try {
+        await delay(500); // Add delay of 0.5 seconds
+
         const customerDetails = await getCustomerDetails(customerId);
         const zoho_deal_id = customerDetails[0].Zoho_Deal_ID;
         if (!zoho_deal_id) {
@@ -303,6 +470,8 @@ const getZohoDealDetails = async (customerId) => {
 
 const getCustomerDetails = async (customerId) => {
     try {
+        await delay(500); // Add delay of 0.5 seconds
+
         const response = await axios.get(`${LEX_CUSTOMER_DETAIL_API}Customer_Id=${customerId}`, {
             headers: {
                 'Authorization': `Bearer ${BEARER_TOKEN}`,

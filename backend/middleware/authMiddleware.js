@@ -1,16 +1,28 @@
-const basicAuth = require('basic-auth');
+const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const Token = require('../models/tokenModel');
 dotenv.config();
 
-// Middleware for Basic Authentication
-const basicAuthMiddleware = (req, res, next) => {
-    const credentials = basicAuth(req);
-
-    if (!credentials || credentials.name !== process.env.USER_NAME || credentials.pass !== process.env.PASSWORD) {
-        return res.status(401).json({ message: 'Unauthorized' });
+exports.authMiddleware = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(401).json({ message: "Unauthorized" });
     }
 
-    next();
-};
+    const token = authHeader.split(" ")[1];
 
-module.exports = basicAuthMiddleware;
+    try {
+        const storedToken = await Token.findOne();
+        if (!storedToken || storedToken.token !== token) {
+            return res.status(403).json({ message: "Invalid token" });
+        }
+
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) return res.status(403).json({ message: "Invalid or expired token" });
+            req.user = decoded;
+            next();
+        });
+    } catch (error) {
+        res.status(500).json({ message: "Internal server error", error });
+    }
+};

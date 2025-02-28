@@ -87,9 +87,9 @@ const constructPayload = (customerId, customerDetails) => {
     };
 };
 
-const updateZohoCustomerId = async (customerId, zohoCustomerId) => {
+const updateZohoCustomerId = async (customerId, zohoCustomerId,zohoDealIds) => {
     try {
-        const url = `${LEX_UPDATE_ZOHO_API}Customer_Id=${customerId}&Zoho_Cust_Id=${zohoCustomerId}`;
+        const url = `${LEX_UPDATE_ZOHO_API}Customer_Id=${customerId}&Zoho_Deal_Id=${zohoDealIds}&Zoho_Cust_Id=${zohoCustomerId}`;
         const headers = {
             'Authorization': `Bearer ${BEARER_TOKEN}`,
             'Content-Type': 'application/json',
@@ -125,6 +125,7 @@ const processBatch = async (accountIdsBatch) => {
                 });
 
                 const customerId = accountResponse.data.data[0].Customer_ID;
+                const zohoDealId = accountResponse.data.data[0].Prospect_Name.id
                 const customerDetails = await getCustomerDetails(customerId);
                 const payload = constructPayload(customerId, customerDetails);
 
@@ -142,7 +143,7 @@ const processBatch = async (accountIdsBatch) => {
                 );
 
                 // Update Zoho Customer ID in LEX
-                await updateZohoCustomerId(customerId, zohoAccountId);
+                await updateZohoCustomerId(customerId, zohoAccountId,zohoDealId);
 
                 results.push({ accountId: zohoAccountId, status: 'success', data: updateResponse.data });
             } catch (error) {
