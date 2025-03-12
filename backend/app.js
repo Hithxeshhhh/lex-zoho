@@ -4,15 +4,54 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const router = require("./routes/routes");
+const logRoutes = require('./routes/logs.routes');
 require("dotenv").config(); // Ensure to invoke the config function
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+// CORS Configuration
+const corsOptions = {
+    origin: [
+        'http://localhost:5173', // Your local development frontend
+        'http://localhost:3000',
+        'https://lexship.biz', // Add your production domain
+        /\.lexship\.biz$/ // Allow all subdomains of lexship.biz
+    ],
+    methods: ['GET', 'POST', 'PUT','OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    maxAge: 86400 // Cache preflight requests for 24 hours
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Add CORS headers middleware as backup
+app.use((req, res, next) => {
+    // Check if origin matches allowed patterns
+    const origin = req.headers.origin;
+    if (corsOptions.origin.some(pattern => 
+        typeof pattern === 'string' 
+            ? pattern === origin 
+            : pattern.test(origin)
+    )) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
 
 const port = process.env.PORT || 3000;
 app.use("/api/v1", router);
+app.use('/api/v1', logRoutes);
 
 if (process.env.NODE_ENV === "local") {
   const server = http.createServer(app);
