@@ -393,6 +393,12 @@ const processBatch = async (shipmentIdsBatch, queueFailedUpdate) => {
 
                 const updatedFields = {
 
+                    // zoho accepts this format [YYYY-MM-DD] for date fields,so make sure to convert the date to this format if there are any mismatch in date format
+
+                    // ? new Date(additionalShipmentDetails.Date_of_Creation).toLocaleDateString('en-CA') // Ensures YYYY-MM-DD
+                    // : "",
+
+
                     Name: additionalShipmentDetails.Name || "",
                     Currency: additionalShipmentDetails.Currency || "",
                     Weight_Slab: additionalShipmentDetails.Weight_Slab || "",

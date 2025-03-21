@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEXSHIP - Modern Dashboard</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <style>
+        :root {
+            --primary: #4361ee;
+            --primary-light: #eef2ff;
+            --secondary: #3a0ca3;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+            --border-radius: 8px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.2s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 24px;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+        }
+
+        .form-control::placeholder {
+            color: var(--gray);
+        }
+
+        .form-control:disabled, .form-control[readonly] {
+            background-color: var(--light);
+            opacity: 0.7;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 16px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--secondary);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #0da271;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .btn-outline:hover {
+            background-color: var(--light);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        .badge-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+        }
+
+        .required {
+            color: var(--danger);
+            margin-left: 2px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: var(--border-radius);
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background-color: #eff6ff;
+            color: var(--info);
+            border-left: 4px solid var(--info);
+        }
+
+        .alert-danger {
+            background-color: #fee2e2;
+            color: var(--danger);
+            border-left: 4px solid var(--danger);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 24px;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            color: var(--secondary);
+            background-color: var(--light);
+        }
+
+        .radio-group, .checkbox-group {
+            display: flex;
+            gap: 16px;
+        }
+
+        .radio-label, .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .dimensions-group {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        .dimensions-separator {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        header {
+            background-color: white;
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            padding: 16px 0;
+            margin-bottom: 24px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo span {
+            color: var(--secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            color: var(--dark);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .icon-button:hover {
+            background-color: var(--light);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .welcome-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .welcome-message {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .last-login {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .dimensions-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .dimensions-separator {
+                text-align: center;
+                margin: 5px 0;
+            }
+            
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+            
+            .welcome-bar {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+
+        /* Icons */
+        .icon {
+            width: 20px;
+            height: 20px;
+            stroke-width: 2;
+            stroke: currentColor;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="#" class="logo">
+                    
+                    LEXSHIP
+                </a>
+                <div class="header-actions">
+                    <button class="icon-button">
+                        <span class="notification-badge">0</span>
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                    </button>
+                    <button class="icon-button">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </button>
+                    <a href="#" class="btn btn-outline">Dashboard</a>
+                    <a href="#" class="btn btn-primary">Logout</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Alerts -->
+        <div class="alert alert-info">
+            <svg class="icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+                <strong>Notification:</strong> Do be informed that the services to Russia, Ukraine and Belarus has been suspended till further notice. There is a limitation on availability of tracking updates for Australia and Canada, will keep you updated about any further developments
+            </div>
+        </div>
+        <div class="alert alert-danger">
+            <svg class="icon" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+                <strong>ATTENTION:</strong> Our economical and faster, "ShipDirect" service to UK and EU (for weights up to 2kg) is now available!
+            </div>
+        </div>
+
+        <!-- Welcome Bar -->
+        <div class="welcome-bar">
+            <div class="welcome-message">Welcome Back, <strong>LEXSHIP TEST</strong>!</div>
+            <div class="last-login">Last Login: 17-03-2025 15:57</div>
+        </div>
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+            <h1 class="page-title">Dashboard</h1>
+            <button class="btn btn-success">
+                <svg class="icon" viewBox="0 0 24 24">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Bulk Upload
+            </button>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <div class="tab active">New Shipment</div>
+            <div class="tab">Bookings</div>
+            <div class="tab">My Points</div>
+            <div class="tab">Invoices</div>
+            <div class="tab">Track & Trace</div>
+            <div class="tab">KYC</div>
+            <div class="tab">Profile</div>
+        </div>
+
+        <!-- Shipment Form -->
+        <form id="shipmentForm">
+            <!-- From Section -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 class="section-title">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <path d="M9 18l6-6-6-6"></path>
+                        </svg>
+                        From
+                    </h2>
+                    <button type="button" class="btn btn-success">
+                        <svg class="icon" viewBox="0 0 24 24">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        New Pickup Address
+                    </button>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Pickup Address <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="">Select address</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Company Name <span class="required">*</span></label>
+                        <input type="text" class="form-control" value="N/A" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Address Line 1 <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Address Line 2</label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">City <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">State <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Postal Code <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Country Code <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- To Section -->
+            <div class="card">
+                <h2 class="section-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M5 12h14"></path>
+                        <path d="M12 5l7 7-7 7"></path>
+                    </svg>
+                    To
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Full Name <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone (IDD) Mobile <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Address Line 1 <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Address Line 2</label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Country <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="">** Please select a Country</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">State <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">City <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Pincode <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email <span class="required">*</span></label>
+                        <input type="email" class="form-control">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shipment Details Section -->
+            <div class="card">
+                <h2 class="section-title">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                        <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                    </svg>
+                    Shipment Details
+                </h2>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Reference ID</label>
+                        <input type="text" class="form-control" placeholder="Product ID / Ref Number">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Service Type <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="ship+">Ship+</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Product <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="goods">Sale of Goods</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Description <span class="required">*</span></label>
+                        <input type="text" class="form-control" placeholder="Product Description">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">HSN Code <span class="required">*</span></label>
+                        <input type="text" class="form-control" placeholder="8 digit HSN Code">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Item Value Currency <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="">Select currency</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Declared CIF Item Value (USD) <span class="required">*</span></label>
+                        <input type="text" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Quantity <span class="required">*</span></label>
+                        <select class="form-control">
+                            <option value="">--Choose--</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Quantity Item <span class="required">*</span></label>
+                        <input type="text" class="form-control" readonly>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 24px;">
+                    <label class="form-label">Package Dimensions <span class="required">*</span></label>
+                    <div class="dimensions-group">
+                        <div class="form-group" style="flex: 1;">
+                            <input type="text" class="form-control" placeholder="Length (cm)" id="length">
+                        </div>
+                        <div class="dimensions-separator">×</div>
+                        <div class="form-group" style="flex: 1;">
+                            <input type="text" class="form-control" placeholder="Width (cm)" id="width">
+                        </div>
+                        <div class="dimensions-separator">×</div>
+                        <div class="form-group" style="flex: 1;">
+                            <input type="text" class="form-control" placeholder="Height (cm)" id="height">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Volumetric Weight (gms)</label>
+                        <input type="text" class="form-control" id="volumetricWeight" readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Weight (gm) <span class="required">*</span></label>
+                        <input type="text" class="form-control" placeholder="1 to 2000 grams">
+                    </div>
+                </div>
+
+                <div style="margin: 24px 0;">
+                    <button type="button" id="toggleBtn" class="btn btn-outline">
+                        <svg class="icon" id="toggleIcon" viewBox="0 0 24 24">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        Additional Details
+                    </button>
+                </div>
+
+                <div id="additionalFields" style="display: none;">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label class="form-label">IGST <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="igst" value="yes">
+                                    Yes
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="igst" value="no" checked>
+                                    No
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">IGST Amount <span class="required">*</span></label>
+                            <input type="text" class="form-control" readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Invoice Number</label>
+                            <input type="text" class="form-control" placeholder="Invoice Number">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Invoice Date</label>
+                            <input type="date" class="form-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Govt Incentive <span class="required">*</span></label>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="incentive" value="yes">
+                                    Yes
+                                </label>
+                                <label class="radio-label">
+                                    <input type="radio" name="incentive" value="no" checked>
+                                    No
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div style="display: flex; justify-content: flex-end; margin: 24px 0;">
+                <button type="button" id="calculateBtn" class="btn btn-primary">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <line x1="12" y1="1" x2="12" y2="23"></line>
+                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                    </svg>
+                    Calculate Price
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Toggle additional fields
+        const toggleBtn = document.getElementById('toggleBtn');
+        const toggleIcon = document.getElementById('toggleIcon');
+        const additionalFields = document.getElementById('additionalFields');
+        
+        toggleBtn.addEventListener('click', function() {
+            if (additionalFields.style.display === 'none') {
+                additionalFields.style.display = 'block';
+                toggleIcon.innerHTML = '<polyline points="18 15 12 9 6 15"></polyline>';
+            } else {
+                additionalFields.style.display = 'none';
+                toggleIcon.innerHTML = '<polyline points="6 9 12 15 18 9"></polyline>';
+            }
+        });
+
+        // Calculate volumetric weight
+        const lengthInput = document.getElementById('length');
+        const widthInput = document.getElementById('width');
+        const heightInput = document.getElementById('height');
+        const volumetricWeightInput = document.getElementById('volumetricWeight');
+
+        function calculateVolumetricWeight() {
+            const length = parseFloat(lengthInput.value) || 0;
+            const width = parseFloat(widthInput.value) || 0;
+            const height = parseFloat(heightInput.value) || 0;
+            
+            // Volumetric weight formula (L × W × H / 5000)
+            const volumetricWeight = (length * width * height / 5000) * 1000; // Convert to grams
+            
+            if (volumetricWeight > 0) {
+                volumetricWeightInput.value = volumetricWeight.toFixed(2);
+            } else {
+                volumetricWeightInput.value = "";
+            }
+        }
+
+        lengthInput.addEventListener('input', calculateVolumetricWeight);
+        widthInput.addEventListener('input', calculateVolumetricWeight);
+        heightInput.addEventListener('input', calculateVolumetricWeight);
+
+        // Form submission
+        document.getElementById('calculateBtn').addEventListener('click', function() {
+            // Show a modern toast notification instead of an alert
+            const toast = document.createElement('div');
+            toast.style.position = 'fixed';
+            toast.style.bottom = '20px';
+            toast.style.right = '20px';
+            toast.style.backgroundColor = 'var(--primary)';
+            toast.style.color = 'white';
+            toast.style.padding = '16px 24px';
+            toast.style.borderRadius = 'var(--border-radius)';
+            toast.style.boxShadow = 'var(--shadow-lg)';
+            toast.style.zIndex = '1000';
+            toast.style.maxWidth = '300px';
+            toast.style.animation = 'fadeIn 0.3s ease';
+            toast.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <svg class="icon" viewBox="0 0 24 24" style="width: 24px; height: 24px;">
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <div>Price calculation in progress...</div>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        });
+
+        // Add some animations
+        document.head.insertAdjacentHTML('beforeend', `
+            <style>
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                
+                @keyframes fadeOut {
+                    from { opacity: 1; transform: translateY(0); }
+                    to { opacity: 0; transform: translateY(20px); }
+                }
+                
+                .card {
+                    animation: fadeIn 0.5s ease;
+                }
+                
+                .form-control:focus {
+                    transition: all 0.3s ease;
+                }
+                
+                .btn {
+                    position: relative;
+                    overflow: hidden;
+                }
+                
+                .btn:after {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    width: 5px;
+                    height: 5px;
+                    background: rgba(255, 255, 255, 0.5);
+                    opacity: 0;
+                    border-radius: 100%;
+                    transform: scale(1, 1) translate(-50%);
+                    transform-origin: 50% 50%;
+                }
+                
+                .btn:focus:not(:active)::after {
+                    animation: ripple 1s ease-out;
+                }
+                
+                @keyframes ripple {
+                    0% {
+                        transform: scale(0, 0);
+                        opacity: 0.5;
+                    }
+                    100% {
+                        transform: scale(20, 20);
+                        opacity: 0;
+                    }
+                }
+            </style>
+        `);
+    </script>
+</body>
+</html>

@@ -1,3 +1,6 @@
+// creating this reusable module to manage logging status
+// This module will be used in the createShipment and updateShipment controllers
+
 const LoggingManager = {
     isLoggingEnabled: false,
     enableLogging() {

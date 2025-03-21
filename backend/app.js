@@ -5,6 +5,8 @@ const https = require("https");
 const fs = require("fs");
 const router = require("./routes/routes");
 const logRoutes = require('./routes/logs.routes');
+const cron = require('node-cron');
+const { syncShipments } = require('./shipmentSyncCron');
 require("dotenv").config(); // Ensure to invoke the config function
 
 const app = express();
@@ -53,6 +55,18 @@ const port = process.env.PORT || 3000;
 app.use("/api/v1", router);
 app.use('/api/v1', logRoutes);
 
+// Initialize cron job for shipment sync
+console.log('Initializing shipment sync cron job...');
+cron.schedule('0 4 * * *', async () => {
+    console.log('Running scheduled shipment sync...');
+    try {
+        await syncShipments();
+        console.log('Scheduled shipment sync completed successfully');
+    } catch (error) {
+        console.error('Error in scheduled shipment sync:', error);
+    }
+});
+
 if (process.env.NODE_ENV === "local") {
   const server = http.createServer(app);
   server.listen(port, () => {
@@ -69,4 +83,4 @@ if (process.env.NODE_ENV === "local") {
   server.listen(port, () => {
     console.log(`Server running on ${port}...`);
   });
-}
+} 

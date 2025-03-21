@@ -14,6 +14,7 @@ const { createShipmentController } = require('../controllers/createShipment.cont
 const { updateShipmentController } = require('../controllers/updateShipment.controller');
 const { getShipmentController } = require('../controllers/getShipment.controller');
 const { updateDetailstoZohoController } = require('../controllers/updateDetailstoZoho.controller');
+const { syncShipments } = require('../shipmentSyncCron');
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
@@ -43,5 +44,17 @@ router.get('/get-shipment', verifyToken, getShipmentController);
 router.put('/update-shipment', verifyToken, updateShipmentController);
 
 router.post('/update-details-to-zoho', verifyToken, upload.single('file'), updateDetailstoZohoController);
+
+// Add manual sync endpoint
+router.post('/trigger-sync',verifyToken, async (req, res) => {
+    try {
+        console.log('Manually triggering shipment sync...');
+        await syncShipments();
+        res.json({ message: 'Sync process completed successfully' });
+    } catch (error) {
+        console.error('Error during manual sync:', error);
+        res.status(500).json({ error: 'Sync process failed', details: error.message });
+    }
+});
 
 module.exports = router;

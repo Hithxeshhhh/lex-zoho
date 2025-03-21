@@ -278,6 +278,12 @@ const mapShipmentDetailsToPayload = async (details) => {
 
     const payload = {
         data: [{
+
+                     // zoho accepts this format [YYYY-MM-DD] for date fields,so make sure to convert the 
+                     // date to this format if there are any mismatch in date format
+
+                    // ? new Date(details.Date_of_Creation).toLocaleDateString('en-CA') // Ensures YYYY-MM-DD
+                    // : "",
             
                 Name: details.Name || "",
                 Currency: details.Currency || "",
@@ -295,7 +301,9 @@ const mapShipmentDetailsToPayload = async (details) => {
                 Billed_Weight: details.Billed_Weight ? parseFloat(details.Billed_Weight).toFixed(2) : "",
                 Proforma_No: details.Proforma_No || "",
                 IOSS_EORI: details.IOSS_EORI || "",
-                Date_of_Creation: details.Date_of_Creation ? new Date(details.Date_of_Creation).toISOString().split('T')[0] : "",
+                Date_of_Creation: details.Date_of_Creation 
+                ? new Date(details.Date_of_Creation).toLocaleDateString('en-CA') // Ensures YYYY-MM-DD
+                : "",
                 Final_Inv_Date: details.Final_Inv_Date ? convertDateFormat(details.Final_Inv_Date) : "",
                 MIS_Weight: details.MIS_Weight || "",
                 Record_Status__s: details.Record_Status__s || "",

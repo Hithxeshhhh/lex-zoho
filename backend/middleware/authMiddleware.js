@@ -3,6 +3,8 @@ const dotenv = require('dotenv');
 const Token = require('../models/tokenModel');
 dotenv.config();
 
+// Middleware to check if the user is authenticated 
+
 exports.authMiddleware = async (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
