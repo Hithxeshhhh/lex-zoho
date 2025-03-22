@@ -115,10 +115,9 @@ async function syncShipments() {
         for (const awb of awbs) {
             const shipmentDetails = await checkShipmentDetails(awb);
             
-            if (!shipmentDetails) {
-                console.log(`No details found for AWB ${awb}, will create new shipment`);
+              if (!shipmentDetails.id) {
                 awbsToCreate.push(awb);
-            } else if (shipmentDetails.id) {
+            } else {
                 shipmentIdsToUpdate.push(shipmentDetails.id);
             }
             
