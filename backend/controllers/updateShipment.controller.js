@@ -488,6 +488,8 @@ const processBatch = async (shipmentIdsBatch, queueFailedUpdate) => {
                     //     name: accountDetails.Account_Name || "",
                     //     id: accountDetails.id || ""
                     // } : null,
+                    Billing_State_39: additionalShipmentDetails.Customer_ID ? 
+                        (await getCustomerDetails(additionalShipmentDetails.Customer_ID))?.[1]?.[0]?.state || "" : "",
                 };
 
                 // Construct Payload
