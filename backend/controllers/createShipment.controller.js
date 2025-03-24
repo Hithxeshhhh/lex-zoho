@@ -253,7 +253,7 @@ const mapShipmentDetailsToPayload = async (details) => {
     // Get customer details
     const customerDetails = await getCustomerDetails(details.Customer_ID);
     
-    
+    const state = customerDetails?.[1]?.[0]?.state || "";
     // Get deal details using customer ID
     const dealDetails = await getZohoDealDetails(details.Customer_ID);
     
@@ -359,6 +359,7 @@ const mapShipmentDetailsToPayload = async (details) => {
                 RTS_Date1:details.Rts_Date 
                         ? new Date(details.Rts_Date).toLocaleDateString('en-CA')
                         : "",
+                Billing_State_39:state
             
         }]
     };
